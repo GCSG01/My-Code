@@ -1,33 +1,32 @@
 #include<bits/stdc++.h>
-#define int long long
 using namespace std;
-const int N=5e5+5;
+const int N=2e5+10;
+int n;
 int a[N];
-signed main() {
+vector<int>g[N];
+int dfs(int x){
+	if(!g[x].size())
+        return a[x];
+	int mn=INT_MAX;
+	for(auto y:g[x])
+        mn=min(mn,dfs(y));
+	if(a[x]>=mn)
+        return mn;
+	else return (a[x]+mn)/2;
+}
+int main(){
     ios::sync_with_stdio(0);cin.tie(0);
-    int c,t;cin>>c>>t;
-    while (t--){
-        int n,k;cin>>n>>k;
-		for(int i=1;i<=n;i++)cin>>a[i];
-        int s=0;
-		for(int i=1;i<=n;i++)s|=a[i];
-        int mx=0,id=0;
-		for(int i=1;i<=n;i++){
-            int sum=a[i]+k;
-            for(int j=1;j<n;j++){
-                if(j==i)continue;
-                sum|=a[j];
-            }
-            if(sum>mx)
-                mx=sum,id=i;
-        }
-        cout<<mx<<"\n";
-        for(int i=1;i<=n;i++){
-			if(i==id)cout<<k;
-			else cout<<0;
-			cout<<" ";
-        }
-		cout<<"\n";
+	int T;cin>>T;
+    while(T--){
+        cin>>n;
+        for(int i=1;i<=n;i++)
+            cin>>a[i],g[i].clear();
+        for(int i=2,x;i<=n;i++)
+            cin>>x,g[x].push_back(i);
+        int mn=INT_MAX;
+        for(auto v:g[1])
+            mn=min(mn,dfs(v));
+        cout<<a[1]+mn<<"\n";
     }
-    return 0;
+	return 0;
 }
