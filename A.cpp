@@ -1,32 +1,35 @@
 #include<bits/stdc++.h>
+#define int long long
 using namespace std;
-const int N=2e5+10;
-int n;
+const int mod=19990721,N=1005;
 int a[N];
-vector<int>g[N];
-int dfs(int x){
-	if(!g[x].size())
-        return a[x];
-	int mn=INT_MAX;
-	for(auto y:g[x])
-        mn=min(mn,dfs(y));
-	if(a[x]>=mn)
-        return mn;
-	else return (a[x]+mn)/2;
-}
-int main(){
+signed main(){
     ios::sync_with_stdio(0);cin.tie(0);
-	int T;cin>>T;
-    while(T--){
-        cin>>n;
-        for(int i=1;i<=n;i++)
-            cin>>a[i],g[i].clear();
-        for(int i=2,x;i<=n;i++)
-            cin>>x,g[x].push_back(i);
-        int mn=INT_MAX;
-        for(auto v:g[1])
-            mn=min(mn,dfs(v));
-        cout<<a[1]+mn<<"\n";
+    int n,m;cin>>n>>m;
+    for(int i=1;i<=n;i++)a[i]=1;
+    int lst=0;
+    while(m--){
+        int o;cin>>o;
+        if(!o){
+            int x,y;cin>>x>>y;
+            int l=(x+lst)%n+2,r=(y+lst)%n+2;
+            for(int i=l;i<=r;i++)
+                a[i]=-a[i];
+        }
+        else{
+            int x,y,k;cin>>x>>y>>k;
+            int l=(x+lst)%n+1,r=(y+lst)%n+1,ans=0;
+            if(!k)ans=1;
+            else if(k>1)ans=2;
+            else{
+                int s1=1,s2=1;
+                for(int i=l+1;i<=r;i++)
+                    if(a[i]==1)(s1+=s2)%=mod;
+                    else (s2+=s1)%=mod;
+                ans=(s1+s2)%mod;
+            }
+            cout<<(lst=ans)<<"\n";
+        }
     }
-	return 0;
+    return 0;
 }
