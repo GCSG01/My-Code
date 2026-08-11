@@ -62,7 +62,7 @@ signed main(){
     }
     cout<<mincost<<"\n";
     memset(head,0,sizeof head),tot=1;
-     for(int i=1;i<=n;i++)
+    for(int i=1;i<=n;i++)
         add(s,i,1,0),add(i+n,t,1,0);
     for(int i=1;i<=n;i++)
         for(int j=1;j<=n;j++)
