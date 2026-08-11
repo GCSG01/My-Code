@@ -26,7 +26,6 @@ void modify(int &p,int l,int r,int x,int k){
     int mid=(l+r)>>1;
     if(x<=mid)modify(ch[p][0],l,mid,x,k);
     else modify(ch[p][1],mid+1,r,x,k);
-
     return ;
 }
 int query(int p,int l,int r,int ql,int qr){
