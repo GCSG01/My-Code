@@ -1,152 +1,59 @@
 #include<bits/stdc++.h>
-#define int long long
 using namespace std;
-const int N=5e3+5;
-int n,m,K;
-struct node{
-    int v,id;
-};
-vector<node>e[N];
-int in[N],flag[N],ans[N];
-void topo(){
-    queue<int>q;
-    for(int i=1;i<=n;i++)
-        if(in[i]<2)flag[i]=0,q.push(i);
-    while(!q.empty()){
-        int x=q.front();q.pop();
-        for(auto y:e[x]){
-            in[y.v]--;
-            if(in[y.v]<2&&flag[y.v])q.push(y.v),flag[y.v]=0;
-        }
-    }
+const int N=1e6+5;
+int n;
+vector<int>pos[N];
+int mx[N<<2],tag[N<<2];
+bool pr[N<<2];
+#define ls (p<<1)
+#define rs (p<<1|1)
+#define mid ((l+r)>>1)
+inline void upd(int l,int r,int p,int v){
+    return mx[p]=v,pr[p]=((r-l+1)&1)&((n+1-v)&1),tag[p]=v,void();
 }
-void dfs(int x,int fa){
-    if(flag[x])return ;
-    for(auto y:e[x])
-        if(y.v!=fa){
-            if(y.id>m)ans[y.id-m]=1;
-            dfs(y.v,x);
-        }
+inline void push_down(int l,int r,int p){
+    if(tag[p]==-1||l==r)return ;
+    upd(l,mid,ls,tag[p]),upd(mid+1,r,rs,tag[p]),tag[p]=-1;
 }
-int bok[N];
-// int bok[]={0,0,1,1,1,0,1};
-int AAns=0;
-struct edge{
-    int u,v;
-}ed[N];
-int val[N],vv[N];
-bool check(){
-    for(int i=1;i<=n;i++)e[i].clear();
-    for(int i=1;i<=m;i++)
-        if(bok[i]==0)
-            e[ed[i].u].push_back({ed[i].v,0});
-        else e[ed[i].v].push_back({ed[i].u,0});
-    val[K]=1;
-    for(int i=1;i<=n;i++){
-        for(int j=1;j<=n;j++)vv[j]=0;
-        for(int j=1;j<=n;j++){
-            bool flg=0;
-            for(auto v:e[j])
-                if(val[v.v]==1){
-                    flg=1;
-                    break;
-                }
-            vv[j]=flg;
-        }
-        for(int j=1;j<=n;j++)val[j]=vv[j];
-    }
-    int sum=0;
-    for(int i=1;i<=n;i++)sum+=val[i];
-    return sum==1;
+inline void push_up(int p){
+    mx[p]=max(mx[ls],mx[rs]),pr[p]=pr[ls]^pr[rs];
 }
-void sol(int x){
-    if(AAns)return ;
-    if(x>m){
-        if(check()){
-            AAns=1;
-            for(int i=1;i<=m;i++)
-                ans[i]=bok[i];
-            }
-        return ;
-    }
-    bok[x]=0;
-    sol(x+1);
-    bok[x]=1;
-    sol(x+1);
-    return ;
+void build(int l,int r,int p){
+    tag[p]=-1;
+    if(l==r)
+        return mx[p]=l,pr[p]=(n+1-l)&1,void();
+    build(l,mid,ls),build(mid+1,r,rs),push_up(p);
 }
-void baoli(){
-    AAns=0;
-    for(int i=1;i<=n;i++)e[i].clear(),val[i]=0;
-    sol(1);
-    if(!AAns)return cout<<"No\n",void();
-    cout<<"Yes\n";
-    for(int i=1;i<=m;i++)
-        cout<<ans[i];
-    cout<<"\n";
+int query(int l,int r,int p,int s,int t,int c){
+    if(t<l||r<s||mx[p]<c)return n+1;
+    if(l==r)return l;
+    push_down(l,r,p);
+    int sum=query(l,mid,ls,s,t,c);
+    if(sum!=n+1)return sum;
+    return query(mid+1,r,rs,s,t,c);
 }
-signed main(){
+void update(int l,int r,int p,int s,int t,int v){
+    if(t<l||r<s)return ;
+    if(s<=l&&r<=t)
+        return upd(l,r,p,v);
+    push_down(l,r,p);
+    update(l,mid,ls,s,t,v),update(mid+1,r,rs,s,t,v),push_up(p);
+}
+int main(){
     ios::sync_with_stdio(0);cin.tie(0);
-    int t;cin>>t;
-    while(t--){
-        cin>>n>>m>>K;
-        for(int i=1;i<=n;i++)e[i].clear(),flag[i]=1,ans[i]=0,in[i]=0;
-        for(int i=1;i<=m;i++){
-            int u,v;cin>>u>>v,ed[i]={u,v};
-            e[u].push_back({v,i}),e[v].push_back({u,m+i}),in[u]++,in[v]++;
-        }
-        if(n<=15&&m<=15){
-            baoli();
-            continue;
-        }
-        if(m==n-1){
-            cout<<"No\n";
-            continue;
-        }
-        topo();
-        dfs(K,0);
-        int pos=0;
-        for(int i=1;i<=n;i++)
-            if(flag[i]){
-                pos=i;break;
-            }
-        if(pos==0){
-            cout<<"No\n";
-            continue;
-        }
-        for(int i=1;i<=n;i++)
-            if(flag[i]){
-                for(auto y:e[i])
-                    if(!flag[y.v]){
-                        if(y.id>m)ans[y.id-m]=0;
-                        else ans[y.id]=1;
-                    }
-            }
-        vector<int>b;
-        int cur=pos,pre=0;
-        while(1){
-            b.push_back(cur);
-            int nxt=0;
-            for(auto y:e[cur])
-                if(flag[y.v]&&y.v!=pre){
-                    nxt=y.v;
-                    break;
-                }
-            if(nxt==0||nxt==pos)break;
-            pre=cur,cur=nxt;
-        }
-        for(int i=0;i<b.size();i++){
-            int u=b[i],v=b[(i+1)%b.size()];
-            for(auto y:e[u])
-                if(y.v==v){
-                    if(y.id>m)ans[y.id-m]=1;
-                    else ans[y.id]=0;
-                }
-        }
-        cout<<"Yes\n";
-        for(int i=1;i<=m;i++)
-            cout<<(ans[i]^1);
-        cout<<"\n";
+    cin>>n;
+    for(int i=1,x;i<=n;i++)
+        cin>>x,pos[x].push_back(i);
+    build(1,n,1);
+    int pre=pr[1],ans=0;
+    for(int i=0;i<=n;i++){
+        int lst=0;
+        for(int p:pos[i])
+            update(1,n,1,lst+1,min(query(1,n,1,lst+1,p,p)-1,p),p),lst=p;
+        update(1,n,1,lst+1,min(query(1,n,1,lst+1,n,n+1)-1,n),n+1);
+        if(pre^pr[1])ans^=i;
+        pre=pr[1];
     }
+    cout<<ans;
     return 0;
 }

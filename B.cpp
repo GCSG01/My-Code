@@ -1,50 +1,40 @@
 #include<bits/stdc++.h>
 #define int long long
 using namespace std;
-void rd(int &x){
-    char c=getchar();x=0;
-    while(c<'0'||c>'9')c=getchar();
-    while(c>='0'&&c<='9')x=x*10+c-'0',c=getchar();
-}
-const int N=5e5+5;
-int n;
-int a[3][N],b[3][N];
-int pos[N];
-int tr[N];
-inline int lowbit(int x){
-    return x&-x;
-}
-void add(int x){
-    while(x<=n)
-        tr[x]++,x+=lowbit(x);
-    return ;
-}
-int query(int x,int s=0){
-    while(x)
-        s+=tr[x],x-=lowbit(x);
-    return s;
-}
+const int N=1e6+5;
+int n,k,P=1,tot,cnt,sum,p[N],a[N],f[N];
 signed main(){
-    freopen("rotate.in","r",stdin);
-    freopen("rotate.out","w",stdout);
     ios::sync_with_stdio(0);cin.tie(0);
-    cin>>n;
-    for(int i=1;i<=n;i++)cin>>a[1][i];
-    for(int i=1;i<=n;i++)cin>>a[2][i];
-    for(int i=1;i<=n;i++)cin>>b[1][i];
-    for(int i=1;i<=n;i++)cin>>b[2][i];
-    for(int i=1;i<=n;i++)
-        pos[b[1][i]]=pos[b[2][i]]=i;
-    int ans=0;
-    for(int i=1;i<=n;i++){
-        int x=a[1][i],y=a[2][i];
-        if(pos[x]!=pos[y])
-            return cout<<-1,0;
-        if((abs(i-pos[x])%2)!=(x!=b[1][pos[x]]))
-            return cout<<-1,0;
-        ans+=i-query(pos[x])-1;
-        add(pos[x]);
-    }
-    cout<<ans;
+    cin>>n>>k;
+
+    if(!k){for(int i=1;i<=n;i++)cout<<"1 ";return 0;}
+    if(n==2&&k==1)return cout<<"0 0",0;
+    if(n==2&&k==2)return cout<<-1,0;
+
+    while((P<<1)<=n)P<<=1;
+    if(k>=P*2)return cout<<-1,0;
+
+    if(n&1)k^=P+1;
+    for(int i=1;i<=P;i++)p[i]=1,cnt++,tot++;
+    for(int i=P;i>=1;i--)
+        if((i^1^k)<k)k^=i^1,p[i]=i,cnt--;
+    if(n&1)p[P+1]=P+1,tot++;
+
+    sort(p+1,p+tot+1);
+    if(k)p[1]=2,p[2]=3;
+    sort(p+1,p+tot+1);
+
+    cnt=0,a[0]=0,f[p[tot]]=1;
+    for(int i=1;i<tot;i++)
+        if(p[i]!=p[i+1])
+            a[i+1]=p[i],f[p[i]]=1;
+    for(int i=1;i<=tot;i++)
+        if(!a[i]){
+            while(f[cnt])cnt++;
+            a[i]=cnt,f[cnt]=1;
+        }
+
+    for(int i=1;i<=min(n,tot);i++)cout<<a[i]<<" ";
+    for(int i=tot+1;i<=n;i++)cout<<n<<" ";
     return 0;
 }
