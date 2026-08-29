@@ -1,59 +1,63 @@
 #include<bits/stdc++.h>
+#define ll long long
 using namespace std;
-const int N=1e6+5;
-int n;
-vector<int>pos[N];
-int mx[N<<2],tag[N<<2];
-bool pr[N<<2];
-#define ls (p<<1)
-#define rs (p<<1|1)
-#define mid ((l+r)>>1)
-inline void upd(int l,int r,int p,int v){
-    return mx[p]=v,pr[p]=((r-l+1)&1)&((n+1-v)&1),tag[p]=v,void();
+const int N=5e3+5,mod=1e9+7;
+int n,q,sz[N],len[N];
+vector<int>g[N];
+ll fac[N],inv[N];
+ll dp[N][N];
+ll qpow(ll x,ll y){
+    ll s=1;
+    while(y){
+        if(y&1)s*=x,s%=mod;
+        x*=x,x%=mod,y>>=1;
+    }
+    return s;
 }
-inline void push_down(int l,int r,int p){
-    if(tag[p]==-1||l==r)return ;
-    upd(l,mid,ls,tag[p]),upd(mid+1,r,rs,tag[p]),tag[p]=-1;
-}
-inline void push_up(int p){
-    mx[p]=max(mx[ls],mx[rs]),pr[p]=pr[ls]^pr[rs];
-}
-void build(int l,int r,int p){
-    tag[p]=-1;
-    if(l==r)
-        return mx[p]=l,pr[p]=(n+1-l)&1,void();
-    build(l,mid,ls),build(mid+1,r,rs),push_up(p);
-}
-int query(int l,int r,int p,int s,int t,int c){
-    if(t<l||r<s||mx[p]<c)return n+1;
-    if(l==r)return l;
-    push_down(l,r,p);
-    int sum=query(l,mid,ls,s,t,c);
-    if(sum!=n+1)return sum;
-    return query(mid+1,r,rs,s,t,c);
-}
-void update(int l,int r,int p,int s,int t,int v){
-    if(t<l||r<s)return ;
-    if(s<=l&&r<=t)
-        return upd(l,r,p,v);
-    push_down(l,r,p);
-    update(l,mid,ls,s,t,v),update(mid+1,r,rs,s,t,v),push_up(p);
+void dfs(int u,int fa){
+    vector<ll>f(1,1),ff;
+    int sum=1,siz=0;
+    for(auto v:g[u]){
+        if(v==fa)continue;
+        dfs(v,u),siz+=sz[v];
+        int cnt=sum+len[v]-1;
+        ff.assign(cnt,0);
+        for(int i=0;i<sum;i++)
+            for(int j=0;j<len[v];j++)
+                ff[i+j]=(ff[i+j]+f[i]*dp[v][j])%mod;
+        f.swap(ff);
+        sum=cnt;
+    }
+    len[u]=sum+1;
+    memset(dp[u],0,sizeof(ll)*len[u]);
+    for(int i=0;i<sum;i++)
+        (dp[u][i]+=f[i])%=mod,(dp[u][i+1]+=f[i]*(siz-i))%=mod;
+    sz[u]=siz+1;
 }
 int main(){
-    ios::sync_with_stdio(0);cin.tie(0);
-    cin>>n;
-    for(int i=1,x;i<=n;i++)
-        cin>>x,pos[x].push_back(i);
-    build(1,n,1);
-    int pre=pr[1],ans=0;
-    for(int i=0;i<=n;i++){
-        int lst=0;
-        for(int p:pos[i])
-            update(1,n,1,lst+1,min(query(1,n,1,lst+1,p,p)-1,p),p),lst=p;
-        update(1,n,1,lst+1,min(query(1,n,1,lst+1,n,n+1)-1,n),n+1);
-        if(pre^pr[1])ans^=i;
-        pre=pr[1];
+    #ifndef CPH
+        freopen("north.in","r",stdin);
+        freopen("north.out","w",stdout);
+    #endif
+    ios::sync_with_stdio(0),cin.tie(0);
+    cin>>n>>q;
+    for(int i=1,u,v;i<n;i++)
+        cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
+    fac[0]=1;
+    for(int i=1;i<=n;i++)fac[i]=fac[i-1]*i%mod;
+    inv[n]=qpow(fac[n],mod-2);
+    for(int i=n;i;i--)inv[i-1]=inv[i]*i%mod;
+    dfs(1,0);
+    while(q--){
+        int x,y;cin>>x>>y;
+        ll ans=0;
+        for(int i=y;i<len[x];i++)
+            if(dp[x][i]){
+                ll t=dp[x][i]*fac[sz[x]-i]%mod*fac[i]%mod;
+                t=t*inv[y]%mod*inv[i-y]%mod;
+                if((i-y)&1)ans=(ans-t+mod)%mod;
+                else (ans+=t)%=mod;
+            }
+        cout<<ans<<"\n";
     }
-    cout<<ans;
-    return 0;
 }
