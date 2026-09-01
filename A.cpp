@@ -1,55 +1,63 @@
 #include<bits/stdc++.h>
+#define ll long long
 using namespace std;
-typedef long long ll;
-const int N=1505,MOD=1e9+7;
-int n,q,sz[N]; vector<int> g[N]; vector<ll> dp[N];
-ll fac[N],ifac[N];
-ll qpow(ll a,ll b){ll r=1;for(;b;b>>=1,a=a*a%MOD)if(b&1)r=r*a%MOD;return r;}
-void dfs(int u,int fa){
-    vector<ll> p(1,1); int sc=0;
-    for(auto it=g[u].begin();it!=g[u].end();it++){
-        int v=*it;
-		if(v==fa)continue;
-        dfs(v,u),sc+=sz[v];
-        vector<ll> np(p.size()+dp[v].size()-1);
-        for(auto pi=p.begin();pi!=p.end();pi++)
-			if(*pi)
-				for(auto pj=dp[v].begin();pj!=dp[v].end();pj++)
-					if(*pj)
-						np[(pi-p.begin())+(pj-dp[v].begin())]=(*(np.begin()+(pi-p.begin())+(pj-dp[v].begin()))+*pi**pj)%MOD;
-        p=move(np);
+const int N=5e3+5,mod=1e9+7;
+int n,q,sz[N],len[N];
+vector<int>g[N];
+ll fac[N],inv[N];
+ll dp[N][N];
+ll qpow(ll x,ll y){
+    ll s=1;
+    while(y){
+        if(y&1)s*=x,s%=mod;
+        x*=x,x%=mod,y>>=1;
     }
-    dp[u].assign(p.size()+1,0);
-    for(auto pm=p.begin();pm!=p.end();pm++)
-		if(*pm){
-			int m=pm-p.begin();
-			dp[u][m]=(dp[u][m]+*pm)%MOD;
-			dp[u][m+1]=(dp[u][m+1]+*pm*(sc-m))%MOD;
-		}
-    sz[u]=sc+1;
+    return s;
+}
+void dfs(int u,int fa){
+    vector<ll>f(1,1),ff;
+    int sum=1,siz=0;
+    for(auto v:g[u]){
+        if(v==fa)continue;
+        dfs(v,u),siz+=sz[v];
+        int cnt=sum+len[v]-1;
+        ff.assign(cnt,0);
+        for(int i=0;i<sum;i++)
+            for(int j=0;j<len[v];j++)
+                ff[i+j]=(ff[i+j]+f[i]*dp[v][j])%mod;
+        f.swap(ff);
+        sum=cnt;
+    }
+    len[u]=sum+1;
+    memset(dp[u],0,sizeof(ll)*len[u]);
+    for(int i=0;i<sum;i++)
+        (dp[u][i]+=f[i])%=mod,(dp[u][i+1]+=f[i]*(siz-i))%=mod;
+    sz[u]=siz+1;
 }
 int main(){
-	freopen("north.in","r",stdin);
-	freopen("north.out","w",stdout);
+    #ifndef CPH
+        freopen("north.in","r",stdin);
+        freopen("north.out","w",stdout);
+    #endif
     ios::sync_with_stdio(0),cin.tie(0);
     cin>>n>>q;
     for(int i=1,u,v;i<n;i++)
-		cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
+        cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
     fac[0]=1;
-	for(int i=1;i<=n;i++)fac[i]=fac[i-1]*i%MOD;
-    ifac[n]=qpow(fac[n],MOD-2);
-	for(int i=n;i;i--)ifac[i-1]=ifac[i]*i%MOD;
+    for(int i=1;i<=n;i++)fac[i]=fac[i-1]*i%mod;
+    inv[n]=qpow(fac[n],mod-2);
+    for(int i=n;i;i--)inv[i-1]=inv[i]*i%mod;
     dfs(1,0);
     while(q--){
         int x,y;cin>>x>>y;
-		ll ans=0;
-		int S=sz[x];
-        for(auto cm=dp[x].begin()+y;cm!=dp[x].end();cm++)
-			if(*cm){
-				int m=cm-dp[x].begin();
-				ll t=*cm*fac[S-m]%MOD*fac[m]%MOD*ifac[y]%MOD*ifac[m-y]%MOD;
-				ans=((m-y)&1)?(ans-t+MOD)%MOD:(ans+t)%MOD;
-			}
+        ll ans=0;
+        for(int i=y;i<len[x];i++)
+            if(dp[x][i]){
+                ll t=dp[x][i]*fac[sz[x]-i]%mod*fac[i]%mod;
+                t=t*inv[y]%mod*inv[i-y]%mod;
+                if((i-y)&1)ans=(ans-t+mod)%mod;
+                else (ans+=t)%=mod;
+            }
         cout<<ans<<"\n";
     }
 }
