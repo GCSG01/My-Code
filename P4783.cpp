@@ -2,10 +2,8 @@
 #define int long long
 using namespace std;
 const int N=4e3+5,p=1e9+7;
-int a[N][N];
-int n;
-int power(int a,int b){
-    int s=1;
+int a[N][N],n;
+int power(int a,int b,int s=1){
     while(b){
         if(b&1)s=s*a,s%=p;
         a=a*a,a%=p,b>>=1;
@@ -18,13 +16,12 @@ signed main(){
     for(int i=1;i<=n;i++)
         for(int j=1;j<=n;j++)
             cin>>a[i][j];
-    for(int i=1;i<=n;i++)
-        a[i][n+i]=1;
+    for(int i=1;i<=n;i++)a[i][n+i]=1;
     for(int i=1;i<=n;i++){
-        int pos=i;
+        int now=i;
         for(int j=i+1;j<=n;j++)
-            if(a[j][i]>a[pos][i])pos=j;
-        if(pos!=i)swap(a[i],a[pos]);
+            if(a[j][i]>a[now][i])now=j;
+        if(now!=i)swap(a[i],a[now]);
         if(!a[i][i])return cout<<"No Solution",0;
         int inv=power(a[i][i],p-2);
         for(int k=1;k<=n;k++)

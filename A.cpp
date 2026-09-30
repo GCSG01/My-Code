@@ -1,63 +1,94 @@
 #include<bits/stdc++.h>
-#define ll long long
 using namespace std;
-const int N=5e3+5,mod=1e9+7;
-int n,q,sz[N],len[N];
-vector<int>g[N];
-ll fac[N],inv[N];
-ll dp[N][N];
-ll qpow(ll x,ll y){
-    ll s=1;
-    while(y){
-        if(y&1)s*=x,s%=mod;
-        x*=x,x%=mod,y>>=1;
+const int N=5e5+5;
+int n;
+int a[N];
+struct BIT{
+    int t[N];
+    inline void add(int x){
+        while(x<=n)t[x]++,x+=x&-x;
     }
-    return s;
-}
-void dfs(int u,int fa){
-    vector<ll>f(1,1),ff;
-    int sum=1,siz=0;
-    for(auto v:g[u]){
-        if(v==fa)continue;
-        dfs(v,u),siz+=sz[v];
-        int cnt=sum+len[v]-1;
-        ff.assign(cnt,0);
-        for(int i=0;i<sum;i++)
-            for(int j=0;j<len[v];j++)
-                ff[i+j]=(ff[i+j]+f[i]*dp[v][j])%mod;
-        f.swap(ff);
-        sum=cnt;
+    inline int ask(int x){
+        int r=0;
+        while(x)r+=t[x],x-=x&-x;
+        return r;
     }
-    len[u]=sum+1;
-    memset(dp[u],0,sizeof(ll)*len[u]);
-    for(int i=0;i<sum;i++)
-        (dp[u][i]+=f[i])%=mod,(dp[u][i+1]+=f[i]*(siz-i))%=mod;
-    sz[u]=siz+1;
-}
+    inline void clear(){
+        memset(t,0,(n+2)*sizeof(int));
+    }
+}bit;
+struct Seg{
+    int mx[N<<2],tag[N<<2];
+    inline void add(int p,int v){
+        mx[p]+=v,tag[p]+=v;
+    }
+    inline void push(int p){
+        if(!tag[p])return ;
+		add(p<<1,tag[p]);
+		add(p<<1|1,tag[p]);
+		tag[p]=0;
+    }
+    void modify(int p,int l,int r,int L,int R,int v){
+        if(L<=l&&r<=R)
+            return add(p,v),void();
+        push(p);
+        int mid=(l+r)>>1;
+        if(L<=mid)modify(p<<1,l,mid,L,R,v);
+        if(R>mid)modify(p<<1|1,mid+1,r,L,R,v);
+        mx[p]=max(mx[p<<1],mx[p<<1|1]);
+    }
+}seg;
+struct node{
+    int x,l,r,v;
+}e[N<<1];
+int pre[N],suf[N];
 int main(){
-    #ifndef CPH
-        freopen("north.in","r",stdin);
-        freopen("north.out","w",stdout);
-    #endif
-    ios::sync_with_stdio(0),cin.tie(0);
-    cin>>n>>q;
-    for(int i=1,u,v;i<n;i++)
-        cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
-    fac[0]=1;
-    for(int i=1;i<=n;i++)fac[i]=fac[i-1]*i%mod;
-    inv[n]=qpow(fac[n],mod-2);
-    for(int i=n;i;i--)inv[i-1]=inv[i]*i%mod;
-    dfs(1,0);
-    while(q--){
-        int x,y;cin>>x>>y;
-        ll ans=0;
-        for(int i=y;i<len[x];i++)
-            if(dp[x][i]){
-                ll t=dp[x][i]*fac[sz[x]-i]%mod*fac[i]%mod;
-                t=t*inv[y]%mod*inv[i-y]%mod;
-                if((i-y)&1)ans=(ans-t+mod)%mod;
-                else (ans+=t)%=mod;
+	freopen("essenceoftwilight.in","r",stdin);
+	freopen("essenceoftwilight.out","w",stdout);
+    ios::sync_with_stdio(0);cin.tie(0);
+    int T,C;cin>>T>>C;
+    while(T--){
+        cin>>n;
+        for(int i=1;i<=n;i++)cin>>a[i];
+        long long inv=0;
+        bit.clear();
+        for(int i=n;i;i--)
+            inv+=bit.ask(a[i]-1),bit.add(a[i]);
+        int pc=0,mx=0;
+        for(int i=1;i<=n;i++)
+            if(a[i]>mx)
+                mx=a[i],pre[++pc]=i;
+        int sc=0,mn=n+1;
+        for(int i=n;i;i--)
+            if(a[i]<mn)
+                mn=a[i],suf[++sc]=i;
+        int cnt=0;
+        for(int k=1;k<=n;k++){
+            int l=1,r=0,L=0,R=pc;
+            while(L<R){
+                int mid=(L+R+1)>>1;
+                if(pre[mid]<k&&a[pre[mid]]<a[k])L=mid;
+                else R=mid-1;
             }
-        cout<<ans<<"\n";
+            int left=L+1;
+            L=0,R=sc;
+            while(L<R){
+                int mid=(L+R+1)>>1;
+                if(suf[mid]<k)L=mid;
+                else R=mid-1;
+            }
+            int rightStart=L+1;
+            if(left>pc||rightStart>sc)continue;
+            e[++cnt]={left,rightStart,sc,2};
+            e[++cnt]={pc+1,rightStart,sc,-2};
+        }
+        sort(e+1,e+cnt+1,[](node A,node B){return A.x<B.x;});
+        int best=0,now=1;
+        for(int i=1;i<=pc;i++){
+            while(now<=cnt&&e[now].x==i)
+                seg.modify(1,1,sc,e[now].l,e[now].r,e[now].v),now++;
+            best=max(best,seg.mx[1]);
+        }
+        cout<<max(0ll,inv-best-1)<<"\n";
     }
 }
