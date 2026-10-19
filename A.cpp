@@ -1,82 +1,58 @@
 #include<bits/stdc++.h>
 #define int long long
 using namespace std;
-const int N=1e5+5;
-int n,q,a[N];
-struct node{
-	int l,r,p;
+const int N=3e6+5;
+int n,a[N];
+vector<int>g[N];
+int sum[N],cnt[N];
+int ans[N];
+void dfs(int x,int fa){
+    int tot=2*a[x];
+    for(int y:g[x])
+        if(y!=fa)
+            dfs(y,x),tot=max(0ll,tot-min(a[x],sum[y])),ans[x]+=ans[y];
+    cnt[x]=2*a[x]-tot,
+    sum[x]=min(a[x],tot),
+    ans[x]+=a[x]-cnt[x];
+}
+int u[N],v[N];
+namespace Generate{
+	int n,seed;
+	static const int mod=1e9;
+	int Rand(int x){
+		seed=(1ll*seed*0x66CCF+19260817ll)%x+1;
+		seed=(1ll*seed*0x77CCF+20060428ll)%x+1;
+		seed=(1ll*seed*0x88CCF+12345678ll)%x+1;
+		seed=(1ll*seed*0x33CCCCFF+10086001ll)%x+1;
+		return seed;
+	}
+	void RS(int* a, int* u, int* v){ //你需要传入三个参数，分别表示点权，一条边的两个端点 
+		int cnt=0;
+		for(int i=1;i<=n;i++)a[i]=Rand(mod); 
+		for(int i=2;i<=n;i++){
+			int fa=Rand(i-1);
+			cnt++;
+			u[cnt]=fa,v[cnt]=i;
+		}
+	}
 };
-vector<node>tmp;
-set<int>pos[N];
-int pre[N];
-int mx[N<<2],tr[N<<2];
-#define ls p<<1
-#define rs p<<1|1
-#define mid ((l+r)>>1)
-inline int calc(int l,int r,int p,int v){
-	if(l==r)return max(mx[p],v);
-	if(mx[p]<=v)return (r-l+1)*v;
-	if(mx[ls]<=v)return (mid-l+1)*v+calc(mid+1,r,rs,v);
-	return tr[p]-tr[ls]+calc(l,mid,ls,v);
-}
-inline void push_up(int l,int r,int p){
-	mx[p]=max(mx[ls],mx[rs]),tr[p]=tr[ls]+calc(mid+1,r,rs,mx[ls]);
-}
-void get(int l,int r,int p,int ql,int qr){
-	if(l>qr||r<ql)return;
-	if(ql<=l&&r<=qr)return tmp.push_back({l,r,p});
-	get(l,mid,ls,ql,qr),get(mid+1,r,rs,ql,qr);
-}
-void update(int l,int r,int p,int x,int v){
-	if(l==r)
-		return mx[p]=tr[p]=v,void();
-	if(x<=mid)update(l,mid,ls,x,v);
-	if(x>mid)update(mid+1,r,rs,x,v);
-	push_up(l,r,p);
-}
-inline void rd(int &x){
-	char p=getchar();x=0;
-	while(p<'0'||p>'9')p=getchar();
-	while(p>='0'&&p<='9')x=x*10+p-'0',p=getchar();
-}
-inline void print(int x){
-	if(x>9)print(x/10);
-	putchar(x%10+'0');
-}
 signed main(){
-	ios::sync_with_stdio(0);cin.tie(0);
-	freopen("game.in","r",stdin);
-	freopen("game.out","w",stdout);
-	rd(n),rd(q);
-	for(int i=1;i<=n;i++){
-		rd(a[i]);
-		if(!pos[a[i]].empty())pre[i]=*prev(pos[a[i]].end());
-		update(1,n,1,i,pre[i]),pos[a[i]].insert(i);
+    ios::sync_with_stdio(0);cin.tie(0);
+    int op;cin>>op;
+	if(op==1){
+        cin>>n;
+        for(int i=1;i<=n;i++)cin>>a[i];
+        for(int i=1,u,v;i<n;i++)
+            cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
+	}else{
+		int n;cin>>Generate::seed>>n;
+		Generate::n=n;
+		Generate::RS(a,u,v);
+        for(int i=1;i<n;i++)
+            g[u[i]].push_back(v[i]),g[v[i]].push_back(u[i]);
+		for(int i=1;i<=n;i++)
+			cout<<g[i].size();
 	}
-	while(q--){
-		int op,x,y;rd(op),rd(x),rd(y);
-		if(op==1){
-			tmp.clear(),get(1,n,1,x,y);
-			int now=x-1,ans=y*(y+1)/2-x*(x-1)/2;
-			for(auto [l,r,p]:tmp)
-				ans-=calc(l,r,p,now),now=max(now,mx[p]);
-			print(ans),puts("");
-		}
-		else{
-			pos[a[x]].erase(x);
-			auto it=pos[a[x]].upper_bound(x);
-			if(it!=pos[a[x]].end()){
-				if(it!=pos[a[x]].begin())pre[*it]=*prev(it);
-				else pre[*it]=0;
-				update(1,n,1,*it,pre[*it]);
-			}
-			a[x]=y;
-			it=pos[y].upper_bound(x);
-			if(it!=pos[y].end())
-				pre[*it]=x,update(1,n,1,*it,pre[*it]);
-			if(it!=pos[y].begin())pre[x]=*prev(it);
-			else pre[x]=0;
-			update(1,n,1,x,pre[x]),pos[y].insert(x);
-		}
-	}
+    dfs(1,0);
+    // cout<<ans[1];
 }
