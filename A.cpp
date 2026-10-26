@@ -1,58 +1,48 @@
 #include<bits/stdc++.h>
-#define int long long
+#define int long long 
 using namespace std;
-const int N=3e6+5;
-int n,a[N];
-vector<int>g[N];
-int sum[N],cnt[N];
+const int N=5e3+5,mod=1e9+7;
+int n,f[N][N],g[N][N];
+string s;
 int ans[N];
-void dfs(int x,int fa){
-    int tot=2*a[x];
-    for(int y:g[x])
-        if(y!=fa)
-            dfs(y,x),tot=max(0ll,tot-min(a[x],sum[y])),ans[x]+=ans[y];
-    cnt[x]=2*a[x]-tot,
-    sum[x]=min(a[x],tot),
-    ans[x]+=a[x]-cnt[x];
-}
-int u[N],v[N];
-namespace Generate{
-	int n,seed;
-	static const int mod=1e9;
-	int Rand(int x){
-		seed=(1ll*seed*0x66CCF+19260817ll)%x+1;
-		seed=(1ll*seed*0x77CCF+20060428ll)%x+1;
-		seed=(1ll*seed*0x88CCF+12345678ll)%x+1;
-		seed=(1ll*seed*0x33CCCCFF+10086001ll)%x+1;
-		return seed;
-	}
-	void RS(int* a, int* u, int* v){ //你需要传入三个参数，分别表示点权，一条边的两个端点 
-		int cnt=0;
-		for(int i=1;i<=n;i++)a[i]=Rand(mod); 
-		for(int i=2;i<=n;i++){
-			int fa=Rand(i-1);
-			cnt++;
-			u[cnt]=fa,v[cnt]=i;
-		}
-	}
-};
 signed main(){
-    ios::sync_with_stdio(0);cin.tie(0);
-    int op;cin>>op;
-	if(op==1){
-        cin>>n;
-        for(int i=1;i<=n;i++)cin>>a[i];
-        for(int i=1,u,v;i<n;i++)
-            cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
-	}else{
-		int n;cin>>Generate::seed>>n;
-		Generate::n=n;
-		Generate::RS(a,u,v);
-        for(int i=1;i<n;i++)
-            g[u[i]].push_back(v[i]),g[v[i]].push_back(u[i]);
-		for(int i=1;i<=n;i++)
-			cout<<g[i].size();
+	ios::sync_with_stdio(0);cin.tie(0);
+	freopen("mountain.in","r",stdin);
+	freopen("mountain.out","w",stdout);
+	int cid;cin>>cid>>s,n=s.size(),s=" "+s;
+	f[0][0]=g[n+1][0]=1;
+	for(int i=0;i<n;i++)
+		for(int j=0;j<=i;j++){
+			(f[i+1][j]+=f[i][j]*j%mod)%=mod;
+			if(s[i+1]=='U')
+				(f[i+1][j+1]+=f[i][j]*(j+1)%mod)%=mod;
+			else if(j)
+				(f[i+1][j-1]+=f[i][j]*(j-1)%mod)%=mod;
+		}
+	if(n==1)return cout<<1,0;
+	for(int i=n+1;i>1;i--)
+		for(int j=0;j<=n-i+1;j++){
+			(g[i-1][j]+=g[i][j]*j%mod)%=mod;
+			if(s[i-1]=='D')
+				(g[i-1][j+1]+=g[i][j]*(j+1)%mod)%=mod;
+			else if(j)
+				(g[i-1][j-1]+=g[i][j]*(j-1)%mod)%=mod;
+		}
+	for(int i=1;i<=n;i++){
+		if(i==1)
+			ans[i]=g[2][1];
+		else if(i==n)
+			ans[i]=f[n-1][1];
+		else
+			for(int j=1;j<=n;j++){
+				int L=f[i-1][j],R=g[i+1][j-1];
+				(ans[i]+=L*R%mod)%=mod;
+				R=g[i+1][j];
+				(ans[i]+=L*R%mod*2%mod)%=mod;
+				R=g[i+1][j+1];
+				(ans[i]+=L*R%mod)%=mod;
+			}
 	}
-    dfs(1,0);
-    // cout<<ans[1];
+	for(int i=1;i<=n;i++)
+		cout<<ans[i]<<" ";
 }
