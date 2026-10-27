@@ -70,6 +70,15 @@ struct Treap{
 		upd(y,m%mod,a%mod);
 		root=merge(merge(x,y),z);
 	}
+	void modify(int x,int k,int m,int a){
+		if(!x)return;
+		push_down(x);
+		int lsiz=size(ls(x));
+		if(k==lsiz+1)
+			return tr[x].val=(tr[x].val*m%mod+a)%mod,void();
+		if(k<=lsiz) modify(ls(x),k,m,a);
+		else modify(rs(x),k-lsiz-1,m,a);
+	}
 	void calc(int x,int &cnt,int *a){
 		if(!x)return;
 		push_down(x);
@@ -115,7 +124,7 @@ struct event{
     int k,id,val;
 }ev[N];
 void dfs(int v,int ffa,Treap &top){
-	fa[v]=ffa;
+	fa[v]=ffa,dep[v]=0;
 	for(int u:g[v])
 		if(u!=ffa)
 			dfs(u,v,top);
@@ -134,16 +143,14 @@ void dfs(int v,int ffa,Treap &top){
 			int cnt=0;
 			top.calc(rt[u],cnt,tmp);
 			for(int j=0;j<=dep[u];j++)
-				top.update(root,j+2,j+2,(tmp[j]+1)%mod,0);
+				top.modify(root,j+2,(tmp[j]+1)%mod,0);
 			top.update(root,dep[u]+3,dep[v]+1,1+tmp[dep[u]],0);
 		}
 	rt[v]=root;
 }
-signed main(){
-	ios::sync_with_stdio(0);cin.tie(0);
-	freopen("game.in","r",stdin);
-	freopen("game.out","w",stdout);
+int solve(){
 	cin>>n;
+	for(int i=1;i<=n;i++)g[i].clear(),rt[i]=son[i]=f[i]=tmp[i]=0;
 	for(int i=1,u,v;i<n;i++)
 		cin>>u>>v,g[u].push_back(v),g[v].push_back(u);
 	Treap top(n+5);
@@ -179,5 +186,13 @@ signed main(){
 		i=r;
 	}
 	if(ans<0)ans+=mod;
-	cout<<ans;
+	return ans;
+}
+signed main(){
+	ios::sync_with_stdio(0);cin.tie(0);
+	// freopen("game.in","r",stdin);
+	// freopen("game.out","w",stdout);
+	int T;cin>>T;
+	for(int i=1;i<=T;i++)
+		cout<<"Case #"<<i<<": "<<solve()<<"\n";
 }

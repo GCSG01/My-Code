@@ -1,48 +1,78 @@
 #include<bits/stdc++.h>
-#define int long long 
 using namespace std;
-const int N=5e3+5,mod=1e9+7;
-int n,f[N][N],g[N][N];
-string s;
-int ans[N];
-signed main(){
-	ios::sync_with_stdio(0);cin.tie(0);
-	freopen("mountain.in","r",stdin);
-	freopen("mountain.out","w",stdout);
-	int cid;cin>>cid>>s,n=s.size(),s=" "+s;
-	f[0][0]=g[n+1][0]=1;
-	for(int i=0;i<n;i++)
-		for(int j=0;j<=i;j++){
-			(f[i+1][j]+=f[i][j]*j%mod)%=mod;
-			if(s[i+1]=='U')
-				(f[i+1][j+1]+=f[i][j]*(j+1)%mod)%=mod;
-			else if(j)
-				(f[i+1][j-1]+=f[i][j]*(j-1)%mod)%=mod;
-		}
-	if(n==1)return cout<<1,0;
-	for(int i=n+1;i>1;i--)
-		for(int j=0;j<=n-i+1;j++){
-			(g[i-1][j]+=g[i][j]*j%mod)%=mod;
-			if(s[i-1]=='D')
-				(g[i-1][j+1]+=g[i][j]*(j+1)%mod)%=mod;
-			else if(j)
-				(g[i-1][j-1]+=g[i][j]*(j-1)%mod)%=mod;
-		}
-	for(int i=1;i<=n;i++){
-		if(i==1)
-			ans[i]=g[2][1];
-		else if(i==n)
-			ans[i]=f[n-1][1];
-		else
-			for(int j=1;j<=n;j++){
-				int L=f[i-1][j],R=g[i+1][j-1];
-				(ans[i]+=L*R%mod)%=mod;
-				R=g[i+1][j];
-				(ans[i]+=L*R%mod*2%mod)%=mod;
-				R=g[i+1][j+1];
-				(ans[i]+=L*R%mod)%=mod;
-			}
-	}
-	for(int i=1;i<=n;i++)
-		cout<<ans[i]<<" ";
+const int N=5e5+5;
+struct ST{
+    struct node{
+        int mn,mx,L,R;
+    };
+    int n,inf; node t[N*4];
+    ST(int n):n(n),inf(n+1){bd(1,n,1);}
+    int cv(int x,int l,int r){return min(r,max(l,x));}
+    void bd(int l,int r,int p){t[p]={inf,0,1,n};if(l==r)return;int m=(l+r)>>1;bd(l,m,p<<1);bd(m+1,r,p<<1|1);}
+    void ap(int p,int L,int R){
+        if(t[p].mn<=n)t[p].mn=cv(t[p].mn,L,R);
+        if(t[p].mx>=1)t[p].mx=cv(t[p].mx,L,R);
+        t[p].L=cv(t[p].L,L,R);t[p].R=cv(t[p].R,L,R);
+    }
+    void ps(int l,int r,int p){
+        if(l==r||(t[p].L==1&&t[p].R==n))return;
+        ap(p<<1,t[p].L,t[p].R);ap(p<<1|1,t[p].L,t[p].R);
+        t[p].L=1;t[p].R=n;
+    }
+    void pl(int p){t[p].mn=min(t[p<<1].mn,t[p<<1|1].mn);t[p].mx=max(t[p<<1].mx,t[p<<1|1].mx);}
+    void upd(int l,int r,int p,int ql,int qr,int L,int R){
+        if(qr<l||r<ql)return;
+        if(ql<=l&&r<=qr){ap(p,L,R);return;}
+        ps(l,r,p);int m=(l+r)>>1;
+        upd(l,m,p<<1,ql,qr,L,R);upd(m+1,r,p<<1|1,ql,qr,L,R);pl(p);
+    }
+    void upd(int l,int r,int L,int R){if(l<=r)upd(1,n,1,l,r,L,R);}
+    pair<int,int> qry(int l,int r,int p,int ql,int qr){
+        if(qr<l||r<ql)return {inf,0};
+        if(ql<=l&&r<=qr)return {t[p].mn,t[p].mx};
+        ps(l,r,p);int m=(l+r)>>1;
+        auto x=qry(l,m,p<<1,ql,qr),y=qry(m+1,r,p<<1|1,ql,qr);
+        return {min(x.first,y.first),max(x.second,y.second)};
+    }
+    pair<int,int> qry(int l,int r){return l>r?pair<int,int>{inf,0}:qry(1,n,1,l,r);}
+    void sp(int l,int r,int p,int x,int L,int R){
+        if(l==r){t[p]={L,R,1,n};return;}
+        ps(l,r,p);int m=(l+r)>>1;
+        if(x<=m)sp(l,m,p<<1,x,L,R);else sp(m+1,r,p<<1|1,x,L,R);pl(p);
+    }
+    void sp(int x,int L,int R){sp(1,n,1,x,L,R);}
+    pair<int,int> gp(int l,int r,int p,int x){
+        if(l==r)return {t[p].mn,t[p].mx};
+        ps(l,r,p);int m=(l+r)>>1;
+        return x<=m?gp(l,m,p<<1,x):gp(m+1,r,p<<1|1,x);
+    }
+    pair<int,int> gp(int x){return gp(1,n,1,x);}
+};
+
+int a[N], b[N];
+long long d[N+2];
+
+int main(){
+    ios::sync_with_stdio(false);cin.tie(nullptr);
+    int n;if(!(cin>>n))return 0;
+    for(int i=0;i<n;++i)cin>>a[i];
+    for(int i=0;i<n;++i)cin>>b[i];
+    ST st(n);st.sp(a[0],b[0],b[0]);
+    for(int i=1;i<n;++i){
+        int A=a[i],B=b[i];
+        auto left=st.qry(1,A-1),right=st.qry(A+1,n);
+        int nl=n+1,nr=0;
+        if(right.first<=n){nl=min(nl,min(right.first,B));nr=max(nr,min(right.second,B));}
+        if(left.first<=n){nl=min(nl,max(left.first,B));nr=max(nr,max(left.second,B));}
+        st.upd(1,A-1,1,B);st.upd(A+1,n,B,n);st.sp(A,nl,nr);
+    }
+    memset(d,0,sizeof(long long)*(n+2));
+    auto add=[&](int l,int r){if(l<=r){++d[l];--d[r+1];}};
+    for(int x=1;x<=n;++x){
+        auto [L,R]=st.gp(x);
+        if(L<=x)add(x-min(R,x),x-L);
+        if(R>x)add(max(L,x+1)-x,R-x);
+    }
+    long long cur=0;
+    for(int k=0;k<n;++k)cur+=d[k],cout<<cur<<" ";
 }
