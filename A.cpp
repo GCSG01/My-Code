@@ -1,78 +1,83 @@
 #include<bits/stdc++.h>
 using namespace std;
-const int N=5e5+5;
-struct ST{
-    struct node{
-        int mn,mx,L,R;
-    };
-    int n,inf; node t[N*4];
-    ST(int n):n(n),inf(n+1){bd(1,n,1);}
-    int cv(int x,int l,int r){return min(r,max(l,x));}
-    void bd(int l,int r,int p){t[p]={inf,0,1,n};if(l==r)return;int m=(l+r)>>1;bd(l,m,p<<1);bd(m+1,r,p<<1|1);}
-    void ap(int p,int L,int R){
-        if(t[p].mn<=n)t[p].mn=cv(t[p].mn,L,R);
-        if(t[p].mx>=1)t[p].mx=cv(t[p].mx,L,R);
-        t[p].L=cv(t[p].L,L,R);t[p].R=cv(t[p].R,L,R);
-    }
-    void ps(int l,int r,int p){
-        if(l==r||(t[p].L==1&&t[p].R==n))return;
-        ap(p<<1,t[p].L,t[p].R);ap(p<<1|1,t[p].L,t[p].R);
-        t[p].L=1;t[p].R=n;
-    }
-    void pl(int p){t[p].mn=min(t[p<<1].mn,t[p<<1|1].mn);t[p].mx=max(t[p<<1].mx,t[p<<1|1].mx);}
-    void upd(int l,int r,int p,int ql,int qr,int L,int R){
-        if(qr<l||r<ql)return;
-        if(ql<=l&&r<=qr){ap(p,L,R);return;}
-        ps(l,r,p);int m=(l+r)>>1;
-        upd(l,m,p<<1,ql,qr,L,R);upd(m+1,r,p<<1|1,ql,qr,L,R);pl(p);
-    }
-    void upd(int l,int r,int L,int R){if(l<=r)upd(1,n,1,l,r,L,R);}
-    pair<int,int> qry(int l,int r,int p,int ql,int qr){
-        if(qr<l||r<ql)return {inf,0};
-        if(ql<=l&&r<=qr)return {t[p].mn,t[p].mx};
-        ps(l,r,p);int m=(l+r)>>1;
-        auto x=qry(l,m,p<<1,ql,qr),y=qry(m+1,r,p<<1|1,ql,qr);
-        return {min(x.first,y.first),max(x.second,y.second)};
-    }
-    pair<int,int> qry(int l,int r){return l>r?pair<int,int>{inf,0}:qry(1,n,1,l,r);}
-    void sp(int l,int r,int p,int x,int L,int R){
-        if(l==r){t[p]={L,R,1,n};return;}
-        ps(l,r,p);int m=(l+r)>>1;
-        if(x<=m)sp(l,m,p<<1,x,L,R);else sp(m+1,r,p<<1|1,x,L,R);pl(p);
-    }
-    void sp(int x,int L,int R){sp(1,n,1,x,L,R);}
-    pair<int,int> gp(int l,int r,int p,int x){
-        if(l==r)return {t[p].mn,t[p].mx};
-        ps(l,r,p);int m=(l+r)>>1;
-        return x<=m?gp(l,m,p<<1,x):gp(m+1,r,p<<1|1,x);
-    }
-    pair<int,int> gp(int x){return gp(1,n,1,x);}
-};
-
-int a[N], b[N];
-long long d[N+2];
-
-int main(){
-    ios::sync_with_stdio(false);cin.tie(nullptr);
-    int n;if(!(cin>>n))return 0;
-    for(int i=0;i<n;++i)cin>>a[i];
-    for(int i=0;i<n;++i)cin>>b[i];
-    ST st(n);st.sp(a[0],b[0],b[0]);
-    for(int i=1;i<n;++i){
-        int A=a[i],B=b[i];
-        auto left=st.qry(1,A-1),right=st.qry(A+1,n);
-        int nl=n+1,nr=0;
-        if(right.first<=n){nl=min(nl,min(right.first,B));nr=max(nr,min(right.second,B));}
-        if(left.first<=n){nl=min(nl,max(left.first,B));nr=max(nr,max(left.second,B));}
-        st.upd(1,A-1,1,B);st.upd(A+1,n,B,n);st.sp(A,nl,nr);
-    }
-    memset(d,0,sizeof(long long)*(n+2));
-    auto add=[&](int l,int r){if(l<=r){++d[l];--d[r+1];}};
-    for(int x=1;x<=n;++x){
-        auto [L,R]=st.gp(x);
-        if(L<=x)add(x-min(R,x),x-L);
-        if(R>x)add(max(L,x+1)-x,R-x);
-    }
-    long long cur=0;
-    for(int k=0;k<n;++k)cur+=d[k],cout<<cur<<" ";
+const int N=20,M=1<<N;
+int n,m,adj[N],pc[M],path[M],cyc[M],seen[M],cnt[N+2],st[N+2],pos[N+2],girth,best;
+unsigned seed;
+inline unsigned rnd(){seed^=seed<<13;seed^=seed>>17;seed^=seed<<5;return seed;}
+void prepare(){
+	int lim=1<<n;
+	fill(cnt,cnt+N+2,0);
+	for(int s=1;s<lim;s++){
+		int rt=s&-s;
+		if(s==rt)path[s]=s;
+		else{
+			int e=0;
+			for(int x=s^rt;x;x&=x-1){
+				int b=x&-x,v=__builtin_ctz((unsigned)b);
+				if(path[s^b]&adj[v])e|=b;
+			}
+			path[s]=e;
+			if(pc[s]>=3&&(e&adj[__builtin_ctz((unsigned)rt)]))cnt[pc[s]]++;
+		}
+	}
+	st[3]=0;
+	for(int l=3;l<=n;l++)st[l+1]=st[l]+cnt[l];
+	for(int l=3;l<=n;l++)pos[l]=st[l];
+	for(int s=1;s<lim;s++)
+		if(pc[s]>=3&&(path[s]&adj[__builtin_ctz((unsigned)(s&-s))]))
+			cyc[pos[pc[s]]++]=s;
+	girth=n+1;
+	for(int l=3;l<=n;l++)if(st[l+1]-st[l]){girth=l;break;}
+	for(int l=girth;l<=n;l++)
+		for(int i=st[l+1]-1;i>st[l];i--)
+			swap(cyc[i],cyc[st[l]+rnd()%(i-st[l]+1)]);
 }
+bool dfs(int used,int q){
+	best=max(best,q);
+	if(girth>n)return 0;
+	int bound=used?q+(n-pc[used])/(girth-1):(n-1)/(girth-1);
+	if(best>=bound)return best==(n-1)/(girth-1);
+	if(seen[used]>=q)return 0;
+	seen[used]=q;
+	for(int l=girth;l<=n;l++)
+		for(int z=st[l];z<st[l+1];z++){
+			int c=cyc[z];
+			if(pc[c&used]>1)continue;
+			int nu=used|c;
+			if(nu!=used&&dfs(nu,q+1))return 1;
+		}
+	return 0;
+}
+int main(){
+	ios::sync_with_stdio(0);cin.tie(0);
+	freopen("cactus.in","r",stdin);
+	freopen("cactus.out","w",stdout);
+	int C,T;cin>>C>>T;
+	while(T--){
+		cin>>n>>m;memset(adj,0,sizeof adj);
+		for(int i=0,u,v;i<m;i++)
+			cin>>u>>v,u--,v--,adj[u]|=1<<v,adj[v]|=1<<u;
+		int vis=1,stk[N],top=1;stk[0]=0;
+		while(top){
+			int u=stk[--top];
+			for(int x=adj[u]&~vis;x;x&=x-1){
+				int b=x&-x;vis|=b;stk[top++]=__builtin_ctz((unsigned)b);
+			}
+		}
+		if(vis!=(1<<n)-1){cout<<-1<<'\n';continue;}
+		int lim=1<<n;pc[0]=0;
+		for(int s=1;s<lim;s++)pc[s]=pc[s>>1]+(s&1);
+		fill(seen,seen+lim,-1);
+		seed=(unsigned)chrono::steady_clock::now().time_since_epoch().count()^(unsigned)(T*1199540897U);
+		prepare();best=0;
+		if(girth<=n)dfs(0,0);
+		cout<<m-(n-1+best)<<'\n';
+	}
+}
+/*
+1.原图不连通时无解。
+2.连通仙人掌若有q个环,边数为n-1+q,所以要最大化环数。
+3.用子集DP求每个顶点集合是否能组成简单环。path[S]表示从S中最小点出发的哈密顿路径可能终点集合,复杂度O(n*2^n)。
+4.随机打乱候选环,DFS逐个加入环,要求新环与已选顶点交集不超过一个点,并用最短环长度剪枝。
+5.选出的环可用原图中的树边连接成生成仙人掌,答案为m-(n-1-q)。
+*/
