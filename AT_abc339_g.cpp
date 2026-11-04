@@ -2,7 +2,7 @@
 #define int long long
 using namespace std;
 const int N=5e5+5;
-int a[N],n;
+int ans[N],n;
 int B[N],bk;
 int id[N],ll[N],rr[N];
 int sum[N];
@@ -10,13 +10,13 @@ int solve(int l,int r,int x){
 	int L=id[l],R=id[r],ans=0;
 	if(L==R){
 		for(int i=l;i<=r;i++)
-			if(a[i]<=x)ans+=a[i];
+			if(ans[i]<=x)ans+=ans[i];
 		return ans;
 	}
 	for(int i=l;i<=rr[L];i++)
-		if(a[i]<=x)ans+=a[i];
+		if(ans[i]<=x)ans+=ans[i];
 	for(int i=ll[R];i<=r;i++)
-		if(a[i]<=x)ans+=a[i];
+		if(ans[i]<=x)ans+=ans[i];
 	for(int i=L+1;i<R;i++){
 		if(B[ll[i]]>x)continue;
 		int pos=upper_bound(B+ll[i],B+rr[i]+1,x)-B-1;
@@ -27,7 +27,7 @@ int solve(int l,int r,int x){
 signed main(){
 	ios::sync_with_stdio(0);cin.tie(0);
 	cin>>n,bk=min(2000ll,n);
-	for(int i=1;i<=n;i++)cin>>a[i],B[i]=a[i];
+	for(int i=1;i<=n;i++)cin>>ans[i],B[i]=ans[i];
 	for(int i=1;i<=n;i++)id[i]=i/bk+1,rr[id[i]]=i;
 	for(int i=1;i<=n;i++)
 		if(!ll[id[i]])
