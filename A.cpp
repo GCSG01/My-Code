@@ -1,83 +1,58 @@
 #include<bits/stdc++.h>
 using namespace std;
-const int N=20,M=1<<N;
-int n,m,adj[N],pc[M],path[M],cyc[M],seen[M],cnt[N+2],st[N+2],pos[N+2],girth,best;
-unsigned seed;
-inline unsigned rnd(){seed^=seed<<13;seed^=seed>>17;seed^=seed<<5;return seed;}
-void prepare(){
-	int lim=1<<n;
-	fill(cnt,cnt+N+2,0);
-	for(int s=1;s<lim;s++){
-		int rt=s&-s;
-		if(s==rt)path[s]=s;
+const int N=1e6+6;
+int n,c;
+int st[N],a[N],b[N],top,cnt1,cnt2;
+char mp[N],rev[N];
+bitset<N>vis;
+void solve(){
+	string s,t;cin>>n>>c>>t,s=t=" "+t,cnt1=cnt2=top=0;
+	mp['U']='U',mp['D']='D',mp['L']='L',mp['R']='R';
+	if(c==2||c==3)swap(mp['L'],mp['R']);
+	if(c==3||c==4)swap(mp['D'],mp['U']);
+	if(n&1)return cout<<"N0\n",void();
+	cout<<"YE5\n";
+	for(int i=1;i<=n;i++)s[i]=mp[t[i]],vis[i]=1;
+	for(int i=1;i<=n;i++)
+		if(s[i]=='U')st[++top]=i;
+		else if(s[i]=='D'){
+			if(top)top--;
+			else vis[i]=0;
+		}
+	while(top)vis[st[top--]]=0;
+	for(int i=1;i<=n;i++)
+		if(s[i]=='R')st[++top]=i;
+		else if(s[i]=='L'){
+			if(top)top--;
+			else vis[i]=0;
+		}
+	while(top)vis[st[top--]]=0;
+	for(int i=1;i<=n;i++)
+		if(vis[i]);
+		else if(s[i]=='U'||s[i]=='R')
+			a[++cnt1]=i;
+		else b[++cnt2]=i;
+	int ans=(cnt1+cnt2)/2,p=1;
+	if(cnt1&1){
+		if(a[1]<b[cnt2])s[b[cnt2]]=rev[s[a[1]]];
 		else{
-			int e=0;
-			for(int x=s^rt;x;x&=x-1){
-				int b=x&-x,v=__builtin_ctz((unsigned)b);
-				if(path[s^b]&adj[v])e|=b;
-			}
-			path[s]=e;
-			if(pc[s]>=3&&(e&adj[__builtin_ctz((unsigned)rt)]))cnt[pc[s]]++;
+			char x=s[b[cnt2]];
+			s[b[cnt2]]=rev[x],s[a[1]]=x;
+			ans++;
 		}
+		p++,cnt1--,cnt2--;
 	}
-	st[3]=0;
-	for(int l=3;l<=n;l++)st[l+1]=st[l]+cnt[l];
-	for(int l=3;l<=n;l++)pos[l]=st[l];
-	for(int s=1;s<lim;s++)
-		if(pc[s]>=3&&(path[s]&adj[__builtin_ctz((unsigned)(s&-s))]))
-			cyc[pos[pc[s]]++]=s;
-	girth=n+1;
-	for(int l=3;l<=n;l++)if(st[l+1]-st[l]){girth=l;break;}
-	for(int l=girth;l<=n;l++)
-		for(int i=st[l+1]-1;i>st[l];i--)
-			swap(cyc[i],cyc[st[l]+rnd()%(i-st[l]+1)]);
-}
-bool dfs(int used,int q){
-	best=max(best,q);
-	if(girth>n)return 0;
-	int bound=used?q+(n-pc[used])/(girth-1):(n-1)/(girth-1);
-	if(best>=bound)return best==(n-1)/(girth-1);
-	if(seen[used]>=q)return 0;
-	seen[used]=q;
-	for(int l=girth;l<=n;l++)
-		for(int z=st[l];z<st[l+1];z++){
-			int c=cyc[z];
-			if(pc[c&used]>1)continue;
-			int nu=used|c;
-			if(nu!=used&&dfs(nu,q+1))return 1;
-		}
-	return 0;
+	cout<<ans<<"\n";
+	for(int i=p;i<=cnt1;i+=2)s[a[i+1]]=rev[s[a[i]]];
+	for(int i=1;i<=cnt2;i+=2)s[b[i]]=rev[s[b[i+1]]];
+	for(int i=1;i<=n;i++)cout<<mp[s[i]];
+	cout<<"\n";
 }
 int main(){
 	ios::sync_with_stdio(0);cin.tie(0);
-	freopen("cactus.in","r",stdin);
-	freopen("cactus.out","w",stdout);
-	int C,T;cin>>C>>T;
-	while(T--){
-		cin>>n>>m;memset(adj,0,sizeof adj);
-		for(int i=0,u,v;i<m;i++)
-			cin>>u>>v,u--,v--,adj[u]|=1<<v,adj[v]|=1<<u;
-		int vis=1,stk[N],top=1;stk[0]=0;
-		while(top){
-			int u=stk[--top];
-			for(int x=adj[u]&~vis;x;x&=x-1){
-				int b=x&-x;vis|=b;stk[top++]=__builtin_ctz((unsigned)b);
-			}
-		}
-		if(vis!=(1<<n)-1){cout<<-1<<'\n';continue;}
-		int lim=1<<n;pc[0]=0;
-		for(int s=1;s<lim;s++)pc[s]=pc[s>>1]+(s&1);
-		fill(seen,seen+lim,-1);
-		seed=(unsigned)chrono::steady_clock::now().time_since_epoch().count()^(unsigned)(T*1199540897U);
-		prepare();best=0;
-		if(girth<=n)dfs(0,0);
-		cout<<m-(n-1+best)<<'\n';
-	}
+	freopen("retrace.in","r",stdin);
+	freopen("retrace.out","w",stdout);
+	rev['U']='D',rev['D']='U',rev['L']='R',rev['R']='L';
+	int T;cin>>T>>c;
+	while(T--) solve();
 }
-/*
-1.原图不连通时无解。
-2.连通仙人掌若有q个环,边数为n-1+q,所以要最大化环数。
-3.用子集DP求每个顶点集合是否能组成简单环。path[S]表示从S中最小点出发的哈密顿路径可能终点集合,复杂度O(n*2^n)。
-4.随机打乱候选环,DFS逐个加入环,要求新环与已选顶点交集不超过一个点,并用最短环长度剪枝。
-5.选出的环可用原图中的树边连接成生成仙人掌,答案为m-(n-1-q)。
-*/
