@@ -5,3 +5,6 @@
 opt/
 A.*
 A
+*.in
+A.in
+a.in
