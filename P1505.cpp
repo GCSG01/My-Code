@@ -52,7 +52,7 @@ namespace tree{
 		return merge(query(l,mid,ls,ql,qr),query(mid+1,r,rs,ql,qr));
 	}
 }
-void dfs(int x,int fa){		
+void dfs(int x,int fa){
 }
 signed main(){
 	ios::sync_with_stdio(0);cin.tie(0);
