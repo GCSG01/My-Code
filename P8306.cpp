@@ -32,8 +32,7 @@ void solve(){
 	tot=0;
 	int n,q;cin>>n>>q;
 	for(int i=1;i<=n;i++){
-		string s;cin>>s;
-		insert(s);
+		string s;cin>>s,insert(s);
 	}
 	while(q--){
 		string t;cin>>t;

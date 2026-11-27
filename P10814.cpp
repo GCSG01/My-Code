@@ -1,37 +1,33 @@
 #include<bits/stdc++.h>
-#define int long long
+// #define int long long
 using namespace std;
-void rd(int &x){
-	char c=getchar_unlocked();x=0;
-	while(c<'0'||c>'9')c=getchar_unlocked();
-	while(c>='0'&&c<='9')x=x*10+c-'0',c=getchar_unlocked();
-}
-const int N=2e6+5;
-int g[N],ans[N];
-int n,m;
-struct node{
-	int y,id,op;
-};
-vector<node>p[N];
+constexpr int N=4e6+5;
+int n,m,a[N];
+int Ans[N];
+array<int,4>e[N];
 int tr[N];
 inline int lowbit(int x){return x&-x;}
-void add(int x){
-	while(x<=N-5)tr[x]++,x+=lowbit(x);
+inline void update(int x){
+	while(x<=2000000)tr[x]++,x+=lowbit(x);
 }
-int query(int x,int s=0){
-	while(x)s+=tr[x],x-=lowbit(x);
+inline int query(int x){
+	int s=0;
+	while(x)s+=tr[x],s-=lowbit(x);
 	return s;
 }
 signed main(){
 	ios::sync_with_stdio(0);cin.tie(0);
-	rd(n),rd(m);
-	for(int i=1;i<=n;i++)rd(g[i]);
+	cin>>n>>m;
+	for(int i=1;i<=n;i++)cin>>a[i];
 	for(int i=1,l,r,x;i<=m;i++)
-		rd(l),rd(r),rd(x),p[l-1].push_back({x,i,-1}),p[r].push_back({x,i,1});
-	for(int i=1;i<=n;i++){
-		add(g[i]);
-		for(auto j:p[i])
-			ans[j.id]+=query(j.y)*j.op;
+		cin>>l>>r>>x,e[i]={l-1,x,i,-1},e[n+i]={r,x,i,1};
+	sort(e+1,e+m+1,[](auto A,auto B){
+		return A[0]==B[0]?A[1]<B[1]:A[0]<B[0];
+	});
+	int now=0;
+	for(int i=1;i<=m;i++){
+		while(now<e[i][0])update(a[++now]);
+		Ans[e[i][2]]=e[i][3]*query(e[i][1]);
 	}
-	for(int i=1;i<=m;i++)cout<<ans[i]<<"\n";
+	for(int i=1;i<=m;i++)cout<<Ans[i]<<"\n";
 }
